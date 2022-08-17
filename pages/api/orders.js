@@ -3,8 +3,6 @@ import db from "../../lib/mongodb";
 const methodsAllowed = ["GET", "POST"];
 
 const handler = async (req, res) => {
-  console.log(req);
-
   if (!methodsAllowed.includes(req.method))
     return res.status(405).json({ message: "Method Not Allowed" });
 
