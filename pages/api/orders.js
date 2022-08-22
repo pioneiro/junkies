@@ -6,43 +6,67 @@ const handler = async (req, res) => {
   if (!methodsAllowed.includes(req.method))
     return res.status(405).json({ message: "Method Not Allowed" });
 
-  const { email } = req.body.customer;
+  const { email } = req.body.user;
 
   if (!email) return res.status(406).json({ message: "Invalid EmailID" });
 
-  const database = await db.getDatabase();
-  const users = await database.collection("users");
-  const orders = await database.collection("orders");
-  const result = await orders.find({ "customer.email": email }).toArray();
+  const database = db.getDatabase();
+  const users = database.collection("users");
+  const orders = database.collection("orders");
+  const result = (
+    await users
+      .aggregate([
+        {
+          $match: { email },
+        },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "orders",
+            foreignField: "_id",
+            as: "orders",
+            pipeline: [{ $project: { user: 0 } }],
+          },
+        },
+        {
+          $set: { orderCount: { $size: "$orders" } },
+        },
+        {
+          $project: {
+            name: true,
+            email: true,
+            orders: true,
+            orderCount: true,
+          },
+        },
+      ])
+      .toArray()
+  )[0];
 
-  if (result === null)
-    return res.status(404).json({ message: "Order(s) Not Found" });
+  if (!result)
+    return res.status(404).json({ message: "No Orders Found for the Email!" });
 
   switch (req.method) {
     case "GET":
-      const count = result.length;
-
-      res.json({ orders: result, count });
-
+      {
+        res.json(result);
+      }
       break;
     case "POST":
-      const { customer, products, payment_method } = req.body;
+      {
+        const { user, products, payment } = req.body;
 
-      const { insertedId: orderid } = await orders.insertOne({
-        customer,
-        products,
-        payment_method,
-      });
+        const { insertedId: orderid } = await orders.insertOne({
+          user,
+          products,
+          payment,
+          createdAt: Date.now(),
+        });
 
-      const user = await users.findOne({ email });
+        await users.findOneAndUpdate({ email }, { $push: { orders: orderid } });
 
-      if (!user.orders) user.orders = [];
-      user.orders.push(String(orderid));
-
-      await users.findOneAndUpdate({ email }, { $set: { ...user } });
-
-      res.status(200).json({ message: "success" });
-
+        res.status(200).json({ message: "success" });
+      }
       break;
   }
 };
