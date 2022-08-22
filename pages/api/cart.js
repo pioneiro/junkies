@@ -102,10 +102,11 @@ const handler = async (req, res) => {
       break;
     case "DELETE":
       {
-        const { uid } = req.body;
+        const { products, uid } = req.body;
 
         cart = cart.map((e) => ({ uid: e.uniq_id, quantity: e.quantity }));
-        cart = cart.filter((e) => e.uid !== uid);
+        if (products) cart = cart.filter((e) => !products.includes(e.uid));
+        else if (uid) cart = cart.filter((e) => e.uid !== uid);
 
         await users.findOneAndUpdate({ email }, { $set: { ...result, cart } });
 
