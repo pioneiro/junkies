@@ -14,10 +14,7 @@ const GlobalProvider = ({ children }) => {
     const res = await fetch(`/api/cart?email=${session.user.email}`);
     const { cart, count: cartQuantity } = await res.json();
 
-    const cartItems = cart.reduce(
-      (prev, curr) => [...prev, curr.productid],
-      []
-    );
+    const cartItems = cart.reduce((prev, curr) => [...prev, curr.uniq_id], []);
 
     setUser({ ...session.user, cart, cartItems, cartQuantity });
   };

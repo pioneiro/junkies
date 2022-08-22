@@ -17,7 +17,7 @@ const Home = () => {
     return data;
   };
 
-  const addToCart = async (productid, quantity = 1) => {
+  const addToCart = async (uid, quantity = 1) => {
     if (!user) return signIn();
 
     await fetch(`/api/cart?email=${user.email}`, {
@@ -25,43 +25,47 @@ const Home = () => {
         "Content-Type": "application/json",
       },
       method: "POST",
-      body: JSON.stringify({ productid, quantity }),
+      body: JSON.stringify({ uid, quantity }),
     });
 
     await updateUser();
   };
 
-  const updateCart = async (productid, diff) => {
-    let { cart } = user;
+  const updateCart = async (uid, diff) => {
+    const { cart } = user;
 
-    cart = cart.filter((e) => e.productid === productid)[0];
-    cart.quantity += diff;
+    cart = cart.filter((e) => e.uniq_id === uid)[0];
+
+    const body = {
+      uid: cart.uniq_id,
+      quantity: cart.quantity + diff,
+    };
 
     await fetch(`/api/cart?email=${user.email}`, {
       headers: {
         "Content-Type": "application/json",
       },
       method: "PUT",
-      body: JSON.stringify(cart),
+      body: JSON.stringify(body),
     });
 
     await updateUser();
   };
 
-  const remove = async (productid) => {
+  const remove = async (uid) => {
     await fetch(`/api/cart?email=${user.email}`, {
       headers: {
         "Content-Type": "application/json",
       },
       method: "DELETE",
-      body: JSON.stringify({ productid }),
+      body: JSON.stringify({ uid }),
     });
 
     await updateUser();
   };
 
-  const itemQuantity = (productid) =>
-    user.cart.filter((e) => e.productid === productid)[0].quantity;
+  const itemQuantity = (uid) =>
+    user.cart.filter((e) => e.uniq_id === uid)[0].quantity;
 
   const setDefaultImage = (e) => {
     e.target.src =
@@ -101,13 +105,13 @@ const Home = () => {
               <span>{e.product_name}</span>
               <span className="text-2xl font-bold">₹{e.discounted_price}</span>
 
-              {user?.cartItems.includes(e._id) ? (
+              {user?.cartItems.includes(e.uniq_id) ? (
                 <div className="absolute bottom-0 inset-x-0 h-8 flex items-center">
                   <span className="h-full leading-8 grow bg-green-600 text-white">
-                    {itemQuantity(e._id)} In Cart
+                    {itemQuantity(e.uniq_id)} In Cart
                   </span>
                   <button
-                    onClick={updateCart.bind(this, e._id, -1)}
+                    onClick={updateCart.bind(this, e.uniq_id, -1)}
                     className="h-full p-2 bg-orange-600 text-white hover:bg-orange-800 active:bg-orange-500"
                   >
                     <svg
@@ -123,7 +127,7 @@ const Home = () => {
                     </svg>
                   </button>
                   <button
-                    onClick={updateCart.bind(this, e._id, 1)}
+                    onClick={updateCart.bind(this, e.uniq_id, 1)}
                     className="h-full p-2 bg-blue-600 text-white hover:bg-blue-800 active:bg-blue-500"
                   >
                     <svg
@@ -139,7 +143,7 @@ const Home = () => {
                     </svg>
                   </button>
                   <button
-                    onClick={remove.bind(this, e._id)}
+                    onClick={remove.bind(this, e.uniq_id)}
                     className="h-full p-2 bg-red-600 text-white hover:bg-red-800 active:bg-red-500"
                   >
                     <svg
@@ -155,7 +159,7 @@ const Home = () => {
               ) : (
                 <button
                   className="absolute bottom-0 inset-x-0 h-8 bg-green-600 text-white hover:bg-green-800 active:bg-green-500"
-                  onClick={() => addToCart(e._id)}
+                  onClick={() => addToCart(e.uniq_id)}
                 >
                   Add to Cart
                 </button>

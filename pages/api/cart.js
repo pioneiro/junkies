@@ -10,14 +10,54 @@ const handler = async (req, res) => {
 
   if (!email) return res.status(406).json({ message: "Invalid EmailID" });
 
-  const database = await db.getDatabase();
-  const users = await database.collection("users");
-  const result = await users.findOne({ email });
+  const database = db.getDatabase();
+  const users = database.collection("users");
+  const result = (
+    await users
+      .aggregate([
+        {
+          $match: { email },
+        },
+        {
+          $unwind: {
+            path: "$cart",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "cart.uid",
+            foreignField: "uniq_id",
+            as: "items",
+          },
+        },
+        {
+          $set: {
+            items: { $arrayElemAt: ["$items", 0] },
+          },
+        },
+        {
+          $set: { "items.quantity": "$cart.quantity" },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            name: { $first: "$name" },
+            email: { $first: "$email" },
+            image: { $first: "$image" },
+            cart: { $push: "$items" },
+          },
+        },
+      ])
+      .toArray()
+  )[0];
 
-  if (result === null)
-    return res.status(404).json({ message: "User Not Found" });
+  if (!result) return res.status(404).json({ message: "User Not Found" });
 
   let { cart = [] } = result;
+
+  cart = cart.filter((e) => Object.keys(e).length);
 
   switch (req.method) {
     case "GET":
@@ -31,11 +71,12 @@ const handler = async (req, res) => {
       break;
     case "POST":
       {
-        const { productid, quantity = 1 } = req.body;
+        const { uid, quantity = 1 } = req.body;
 
-        let product = cart.find((e) => e.productid === productid);
+        cart = cart.map((e) => ({ uid: e.uniq_id, quantity: e.quantity }));
+        let product = cart.find((e) => e.uid === uid);
 
-        if (!product) cart.push((product = { productid, quantity: 0 }));
+        if (!product) cart.push((product = { uid, quantity: 0 }));
         product.quantity += quantity;
 
         await users.findOneAndUpdate({ email }, { $set: { ...result, cart } });
@@ -45,9 +86,10 @@ const handler = async (req, res) => {
       break;
     case "PUT":
       {
-        const { productid, quantity } = req.body;
+        const { uid, quantity } = req.body;
 
-        const product = cart.find((e) => e.productid === productid);
+        cart = cart.map((e) => ({ uid: e.uniq_id, quantity: e.quantity }));
+        const product = cart.find((e) => e.uid === uid);
 
         product.quantity = quantity;
 
@@ -60,9 +102,10 @@ const handler = async (req, res) => {
       break;
     case "DELETE":
       {
-        const { productid } = req.body;
+        const { uid } = req.body;
 
-        cart = cart.filter((e) => e.productid !== productid);
+        cart = cart.map((e) => ({ uid: e.uniq_id, quantity: e.quantity }));
+        cart = cart.filter((e) => e.uid !== uid);
 
         await users.findOneAndUpdate({ email }, { $set: { ...result, cart } });
 
