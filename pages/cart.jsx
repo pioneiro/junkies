@@ -1,12 +1,11 @@
 import { useContext, useEffect } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 
 import Navbar from "../components/Navbar";
 import GlobalContext from "../components/GlobalContext";
 
 const Cart = () => {
-  const { user, updateUser } = useContext(GlobalContext);
-  const { status } = useSession();
+  const { status, user, updateUser } = useContext(GlobalContext);
 
   useEffect(() => {
     if (status === "unauthenticated") signIn();

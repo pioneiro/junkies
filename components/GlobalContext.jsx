@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 const Global = createContext(null);
 
 const GlobalProvider = ({ children }) => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const [user, setUser] = useState(null);
 
@@ -24,7 +24,9 @@ const GlobalProvider = ({ children }) => {
   }, [session]);
 
   return (
-    <Global.Provider value={{ user, updateUser }}>{children}</Global.Provider>
+    <Global.Provider value={{ status, user, updateUser }}>
+      {children}
+    </Global.Provider>
   );
 };
 
