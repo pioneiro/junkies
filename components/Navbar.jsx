@@ -33,7 +33,7 @@ const Navbar = () => {
               </li>
               <li
                 className="px-2 py-1 border-2 hover:bg-gray-100"
-                onClick={signOut}
+                onClick={signOut.bind(this, { callbackUrl: "/" })}
               >
                 Log Out
               </li>
