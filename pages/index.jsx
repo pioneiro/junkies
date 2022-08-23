@@ -68,8 +68,9 @@ const Home = () => {
     user.cart.filter((e) => e.uniq_id === uid)[0].quantity;
 
   const setDefaultImage = (e) => {
-    e.target.src =
-      "https://newhorizon-mechanical-engineering.s3.ap-south-1.amazonaws.com/nhengineering/mechanical-engineering/wp-content/uploads/2020/01/17104603/default-placeholder.png";
+    e.target.src = "/assets/defaultImage.png";
+    e.target.classList.remove("object-contain");
+    e.target.classList.add("object-cover");
   };
 
   useEffect(() => {
@@ -85,7 +86,7 @@ const Home = () => {
       <Navbar />
 
       <main className="px-16 sm:px-24 pb-16">
-        <h1 className="text-3xl sm:text-4xl md:text-6xl text-center md:text-justify my-8">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl text-center md:text-justify my-8">
           Trending Products
         </h1>
 
