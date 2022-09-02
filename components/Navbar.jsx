@@ -10,7 +10,7 @@ const Navbar = () => {
   return (
     <nav className="h-16 px-8 md:px-16 lg:px-32 bg-green-600 text-white flex justify-between items-center gap-8 sticky top-0 z-10">
       <Link href="/">
-        <a className="text-4xl font-semibold">Junkies</a>
+        <a className="text-4xl font-semibold">☢️Junkies☢️</a>
       </Link>
 
       <ul className="flex justify-center gap-4 text-xl">
